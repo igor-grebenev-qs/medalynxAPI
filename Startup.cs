@@ -4,16 +4,36 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KestrelSample
 {
     public class Startup
     {
-        public void Configure(IApplicationBuilder app)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables();
+
+            Configuration = builder.Build();
+        }
+
+        public IConfiguration Configuration { get; }
+
+        public void ConfigureServices(IServiceCollection services)
+        {
+            System.Console.Write("ConfigureServices called...\r\n");
+            services.Configure<KestrelServerOptions>(
+                Configuration.GetSection("Kestrel"));
+        }
+
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             var serverAddressesFeature =
                 app.ServerFeatures.Get<IServerAddressesFeature>();

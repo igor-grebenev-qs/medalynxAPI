@@ -16,8 +16,6 @@ namespace KestrelSample
 {
     public class Program
     {
-        static int Port = 3333;
-
         public static void Main(string[] args)
         {
             System.Console.Write("DefaultBuilder called\r\n");
@@ -28,11 +26,14 @@ namespace KestrelSample
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    /*
                     webBuilder.ConfigureKestrel(serverOptions =>
                     {
                         serverOptions.Listen(IPAddress.Loopback, Port);
                     })
                     .UseStartup<Startup>();
+                    */
+                    webBuilder.UseStartup<Startup>();
                 });
         /*
 #if DefaultBuilder
