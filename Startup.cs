@@ -35,6 +35,24 @@ namespace KestrelSample
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseStaticFiles();
+
+            // Matches request to an endpoint.
+            app.UseRouting();
+
+
+            // Execute the matched endpoint.
+            app.UseEndpoints(endpoints =>
+            {
+                // Configuration of app endpoints.
+                endpoints.MapGet("/", context => context.Response.WriteAsync("Hello world"));
+                endpoints.MapGet("/test", context => context.Response.WriteAsync("test callback"));
+                endpoints.MapPost("/posttest", context => context.Response.WriteAsync("test callback post"));
+            });
+        }
+
+        public void ConfigureOLD(IApplicationBuilder app, IWebHostEnvironment env)
+        {
             var serverAddressesFeature =
                 app.ServerFeatures.Get<IServerAddressesFeature>();
 
