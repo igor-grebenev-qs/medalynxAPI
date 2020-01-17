@@ -58,16 +58,30 @@ namespace Medalynx
             ));
             */
         }
+        private string GetValue(HttpContext context, string key) {
+            if (!context.Request.Query.Keys.Contains(key)) {
+                return "";
+            }
+
+            var queryString = context.Request.Query;
+            Microsoft.Extensions.Primitives.StringValues someValue;
+            queryString.TryGetValue(key, out someValue);
+
+            return someValue[0];
+        }
 
         private System.Threading.Tasks.Task AddUser(HttpContext context) {
             using (MedialynxDbContext db = new MedialynxDbContext())
             {
+                // recive query parameters
+                int id = int.Parse(this.GetValue(context, "Id"));
+                string name = this.GetValue(context, "Name");
+                int age = int.Parse(this.GetValue(context, "Age"));
+
                 // Test users
-                User user1 = new User { Id=1, Name = "Tom", Age = 33 };
-                User user2 = new User { Id=2, Name = "Alice", Age = 26 };
+                User newUser = new User { Id=id, Name = name, Age = age };
  
-                db.Users.Add(user1);
-                db.Users.Add(user2);
+                db.Users.Add(newUser);
                 db.SaveChanges();
                 
                 // var users = db.Users.ToList(); // userst todo research
@@ -89,7 +103,7 @@ namespace Medalynx
                 endpoints.MapGet("/", context => context.Response.WriteAsync("Hello world"));
                 endpoints.MapGet("/test", context => context.Response.WriteAsync("test callback"));
                 endpoints.MapPost("/posttest", context => context.Response.WriteAsync("test callback post"));
-                endpoints.MapGet("/adduser", context => this.AddUser(context));
+                endpoints.MapPost("/adduser", context => this.AddUser(context));
             });
         }
 
