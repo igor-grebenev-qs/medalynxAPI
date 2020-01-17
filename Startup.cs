@@ -9,9 +9,26 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Pomelo.EntityFrameworkCore.MySql.Storage;
 
-namespace KestrelSample
+namespace Medalynx
 {
+    public class MedialynxDbContext : DbContext {
+        public DbSet<User> Users { get; set; }
+ 
+        public MedialynxDbContext()
+        {
+            Database.EnsureCreated();
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseMySql("server=localhost;UserId=root;Password=m1llions;database=medalynx_db;");
+        }
+    }
+
     public class Startup
     {
         public Startup(IConfiguration configuration, IHostingEnvironment env)
@@ -31,6 +48,31 @@ namespace KestrelSample
             System.Console.Write("ConfigureServices called...\r\n");
             services.Configure<KestrelServerOptions>(
                 Configuration.GetSection("Kestrel"));
+            /*
+            // replace "YourDbContext" with the class name of your DbContext
+            services.AddDbContextPool<MedialynxDbContext>(options => options
+                // replace with your connection string
+                .UseMySql("Server=localhost:3306;Database=ef;User=root;Password=m1llions;", mySqlOptions => mySqlOptions
+                    // replace with your Server Version and Type
+                    .ServerVersion(new ServerVersion(new Version(8, 0, 18), ServerType.MySql))
+            ));
+            */
+        }
+
+        private System.Threading.Tasks.Task AddUser(HttpContext context) {
+            using (MedialynxDbContext db = new MedialynxDbContext())
+            {
+                // Test users
+                User user1 = new User { Id=1, Name = "Tom", Age = 33 };
+                User user2 = new User { Id=2, Name = "Alice", Age = 26 };
+ 
+                db.Users.Add(user1);
+                db.Users.Add(user2);
+                db.SaveChanges();
+                
+                // var users = db.Users.ToList(); // userst todo research
+            }
+            return context.Response.WriteAsync("user added");
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -40,7 +82,6 @@ namespace KestrelSample
             // Matches request to an endpoint.
             app.UseRouting();
 
-
             // Execute the matched endpoint.
             app.UseEndpoints(endpoints =>
             {
@@ -48,6 +89,7 @@ namespace KestrelSample
                 endpoints.MapGet("/", context => context.Response.WriteAsync("Hello world"));
                 endpoints.MapGet("/test", context => context.Response.WriteAsync("test callback"));
                 endpoints.MapPost("/posttest", context => context.Response.WriteAsync("test callback post"));
+                endpoints.MapGet("/adduser", context => this.AddUser(context));
             });
         }
 

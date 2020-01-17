@@ -7,18 +7,18 @@
 
 using System;
 using System.Net;
+using System.Linq;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
 
-namespace KestrelSample
+namespace Medalynx
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            System.Console.Write("DefaultBuilder called\r\n");
             CreateHostBuilder(args).Build().Run();
         }
 
