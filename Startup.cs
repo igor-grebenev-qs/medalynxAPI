@@ -74,38 +74,10 @@ namespace Medalynx
                 endpoints.MapGet("/test", context => context.Response.WriteAsync("test callback"));
                 endpoints.MapPost("/posttest", context => context.Response.WriteAsync("test callback post"));
 
+                endpoints.MapGet("/user", context => userApi.GetUser(context));
                 endpoints.MapPost("/adduser", context => userApi.AddUser(context));
                 endpoints.MapPost("/updateuser", context => userApi.UpdateUser(context));
                 endpoints.MapDelete("/removeuser", context => userApi.RemoveUser(context));
-            });
-        }
-
-        public void ConfigureOLD(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            var serverAddressesFeature =
-                app.ServerFeatures.Get<IServerAddressesFeature>();
-
-            app.UseStaticFiles();
-
-            app.Run(async (context) =>
-            {
-                /*
-                context.Response.ContentType = "text/html";
-                await context.Response
-                    .WriteAsync("<!DOCTYPE html><html lang=\"en\"><head>" +
-                        "<title></title></head><body><p>Hosted by Kestrel</p>");
-                */
-                if (serverAddressesFeature != null)
-                {
-                    await context.Response
-                        .WriteAsync("<p>Listening on the following addresses: " +
-                            string.Join(", ", serverAddressesFeature.Addresses) +
-                            "</p>");
-                }
-                
-                System.Console.Write("requesr recivied\r\n");
-                await context.Response.WriteAsync("<p>Request URL: " +
-                    $"{context.Request.GetDisplayUrl()}<p>");
             });
         }
     }

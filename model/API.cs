@@ -140,6 +140,29 @@ namespace Medalynx {
                 }
                 return context.Response.WriteAsync("user removed successfuly");
             }
+            public System.Threading.Tasks.Task GetUser(HttpContext context) {
+                List<User> users = new List<User>();
+                using (MedialynxDbContext db = new MedialynxDbContext())
+                {
+                    Guid id = ToGuid(this.GetValue(context, "Id"), false);
+                    if (id != Guid.Empty)
+                    {
+                        string sid = id.ToString("B");
+                        var user = db.Users.FirstOrDefault(user => user != null && user.Id == sid);
+                        // Validate instance is not null
+                        if (user != null)
+                        {
+                            users.Add(user);
+                        }
+                    }
+                    else 
+                    { // Add all users
+                        users.AddRange(db.Users);
+                    }
+                }
+                var json = JsonSerializer.Serialize(users);
+                return context.Response.WriteAsync(json);
+            }
         }
     }
 }
