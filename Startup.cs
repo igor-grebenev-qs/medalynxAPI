@@ -31,6 +31,7 @@ namespace Medalynx
 
     public class Startup
     {
+        private Api.UserApi userApi = new Api.UserApi();
         public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -49,7 +50,6 @@ namespace Medalynx
             services.Configure<KestrelServerOptions>(
                 Configuration.GetSection("Kestrel"));
             /*
-            // replace "YourDbContext" with the class name of your DbContext
             services.AddDbContextPool<MedialynxDbContext>(options => options
                 // replace with your connection string
                 .UseMySql("Server=localhost:3306;Database=ef;User=root;Password=m1llions;", mySqlOptions => mySqlOptions
@@ -57,36 +57,6 @@ namespace Medalynx
                     .ServerVersion(new ServerVersion(new Version(8, 0, 18), ServerType.MySql))
             ));
             */
-        }
-        private string GetValue(HttpContext context, string key) {
-            if (!context.Request.Query.Keys.Contains(key)) {
-                return "";
-            }
-
-            var queryString = context.Request.Query;
-            Microsoft.Extensions.Primitives.StringValues someValue;
-            queryString.TryGetValue(key, out someValue);
-
-            return someValue[0];
-        }
-
-        private System.Threading.Tasks.Task AddUser(HttpContext context) {
-            using (MedialynxDbContext db = new MedialynxDbContext())
-            {
-                // recive query parameters
-                int id = int.Parse(this.GetValue(context, "Id"));
-                string name = this.GetValue(context, "Name");
-                int age = int.Parse(this.GetValue(context, "Age"));
-
-                // Test users
-                User newUser = new User { Id=id, Name = name, Age = age };
- 
-                db.Users.Add(newUser);
-                db.SaveChanges();
-                
-                // var users = db.Users.ToList(); // userst todo research
-            }
-            return context.Response.WriteAsync("user added");
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -103,7 +73,10 @@ namespace Medalynx
                 endpoints.MapGet("/", context => context.Response.WriteAsync("Hello world"));
                 endpoints.MapGet("/test", context => context.Response.WriteAsync("test callback"));
                 endpoints.MapPost("/posttest", context => context.Response.WriteAsync("test callback post"));
-                endpoints.MapPost("/adduser", context => this.AddUser(context));
+
+                endpoints.MapPost("/adduser", context => userApi.AddUser(context));
+                endpoints.MapPost("/updateuser", context => userApi.UpdateUser(context));
+                endpoints.MapDelete("/removeuser", context => userApi.RemoveUser(context));
             });
         }
 
