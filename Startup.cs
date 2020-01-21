@@ -25,7 +25,7 @@ namespace Medalynx
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql("server=localhost;UserId=root;Password=m1llions;database=medalynx_db;");
+            optionsBuilder.UseMySql("server=35.188.34.140;UserId=root;Password=m1llions;database=medalynx_db;");
         }
     }
 
