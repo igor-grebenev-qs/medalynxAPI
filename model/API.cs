@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -199,6 +200,16 @@ namespace Medalynx {
                 catch (Exception e)
                 {
                     return context.Response.WriteAsync("can't recive user(s). Exception occured. " + e);
+                }
+            }
+
+            public System.Threading.Tasks.Task Test(HttpContext context) {
+                string json = "";
+                using (System.IO.StreamReader reader = new System.IO.StreamReader(context.Request.Body))
+                {
+                    json = reader.ReadToEnd();
+                    // to do desirialization required
+                    return context.Response.WriteAsync("test body = " + json);
                 }
             }
         }

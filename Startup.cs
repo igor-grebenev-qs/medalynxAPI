@@ -49,14 +49,6 @@ namespace Medalynx
             System.Console.Write("ConfigureServices called...\r\n");
             services.Configure<KestrelServerOptions>(
                 Configuration.GetSection("Kestrel"));
-            /*
-            services.AddDbContextPool<MedialynxDbContext>(options => options
-                // replace with your connection string
-                .UseMySql("Server=localhost:3306;Database=ef;User=root;Password=m1llions;", mySqlOptions => mySqlOptions
-                    // replace with your Server Version and Type
-                    .ServerVersion(new ServerVersion(new Version(8, 0, 18), ServerType.MySql))
-            ));
-            */
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -78,6 +70,8 @@ namespace Medalynx
                 endpoints.MapPost("/adduser", context => userApi.AddUser(context));
                 endpoints.MapPost("/updateuser", context => userApi.UpdateUser(context));
                 endpoints.MapDelete("/removeuser", context => userApi.RemoveUser(context));
+
+                endpoints.MapPost("/test", context => userApi.Test(context));
             });
         }
     }
