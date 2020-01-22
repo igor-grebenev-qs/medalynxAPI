@@ -56,24 +56,54 @@ namespace Medalynx {
             }
         }
 
+        private object QueryArgumentsToObject(HttpContext context, object obj) {
+            foreach (string key in context.Request.Query.Keys) {
+                try
+                {
+                    // Get the Type object corresponding to MyClass.
+                    Type objType=obj.GetType();
+                    // Get the PropertyInfo object by passing the property name.
+                    PropertyInfo myPropInfo = objType.GetProperty(key);
+                    // Set value to object
+                    var propType = myPropInfo.PropertyType;
+                    if (propType.Equals(typeof(string)))
+                    {
+                        myPropInfo.SetValue(obj, this.GetValue(context, key));
+                    }
+                    else if (propType.Equals(typeof(int)))
+                    {
+                        myPropInfo.SetValue(obj, Int32.Parse(this.GetValue(context, key)));
+                    }
+                    else
+                    {
+                        new Exception("Not supported type. todo.");
+                    }
+                }
+                catch(NullReferenceException e)
+                {
+                    Console.WriteLine("The property does not exist in User class." + e.Message);
+                }
+            }
+            return obj;
+        }
+
         public class UserApi : Api{
             public System.Threading.Tasks.Task AddUser(HttpContext context) {
-                using (MedialynxDbContext db = new MedialynxDbContext())
+                try
                 {
-                    // recive query parameters
-                    Guid newGuid = ToGuid(base.GetValue(context, "Id"));
-                    string name = this.GetValue(context, "Name");
-                    int age = int.Parse(this.GetValue(context, "Age"));
-
-                    // New users
-                    User newUser = new User { Id=newGuid.ToString("B"), Name = name, Age = age };
-
-                    db.Users.Add(newUser);
-                    db.SaveChanges();
-                    
-                    // var users = db.Users.ToList(); // userst todo research
+                    using (MedialynxDbContext db = new MedialynxDbContext())
+                    {
+                        Guid id = ToGuid(this.GetValue(context, "Id")); // ability to create user with specified id
+                        User newUser = new User { Id=id.ToString("B") };
+                        QueryArgumentsToObject(context, newUser);
+                        db.Users.Add(newUser);
+                        db.SaveChanges();
+                    }
+                    return context.Response.WriteAsync("user successfuly added");
                 }
-                return context.Response.WriteAsync("user added");
+                catch (Exception e) {
+                    return context.Response.WriteAsync("user can't be added. " + e);
+                }
             }
             
             public System.Threading.Tasks.Task UpdateUser(HttpContext context) {
@@ -87,40 +117,29 @@ namespace Medalynx {
                         // Validate instance is not null
                         if (user != null)
                         {
-                            // user exists. We can update it
-                            foreach (string key in context.Request.Query.Keys) {
-                                try
-                                    {
-                                        // Get the Type object corresponding to MyClass.
-                                        Type userType=typeof(User);       
-                                        // Get the PropertyInfo object by passing the property name.
-                                        PropertyInfo myPropInfo = userType.GetProperty(key);
-                                        // Set value to object
-                                        var propType = myPropInfo.PropertyType;
-                                        if (propType.Equals(typeof(string)))
-                                        {
-                                            myPropInfo.SetValue(user, this.GetValue(context, key));
-                                        }
-                                        else if (propType.Equals(typeof(int)))
-                                        {
-                                            myPropInfo.SetValue(user, Int32.Parse(this.GetValue(context, key)));
-                                        }
-                                        else
-                                        {
-                                            new Exception("Not supported type. todo.");
-                                        }
-                                    }
-                                    catch(NullReferenceException e)
-                                    {
-                                        Console.WriteLine("The property does not exist in User class." + e.Message);
-                                    }
+                            try
+                            {
+                                // user exists. We can update it
+                                QueryArgumentsToObject(context, user);
+                                db.Users.Update(user);
+                                db.SaveChanges();
                             }
-                            db.Users.Update(user);
-                            db.SaveChanges();
+                            catch (Exception e)
+                            {
+                                return context.Response.WriteAsync("user can't be updated. " + e);
+                            }
+                        }
+                        else
+                        {
+                            return context.Response.WriteAsync("user not found");            
                         }
                     }
+                    else
+                    {
+                        return context.Response.WriteAsync("user with specified id not found");            
+                    }
                 }
-                return context.Response.WriteAsync("user updated");
+                return context.Response.WriteAsync("user successfuly updated");
             }
 
             public System.Threading.Tasks.Task RemoveUser(HttpContext context) {
@@ -134,36 +153,53 @@ namespace Medalynx {
                         // Validate instance is not null
                         if (user != null)
                         {
-                            db.Users.Remove(user);
-                            db.SaveChanges();
+                            try
+                            {
+                                db.Users.Remove(user);
+                                db.SaveChanges();
+                            }
+                            catch (Exception e)
+                            {
+                                return context.Response.WriteAsync("user can't be removed. " + e);
+                            }
                         }
-                        else {throw new Exception("Can't remove user with specified id " + sid);}
+                        else
+                        {
+                            return context.Response.WriteAsync("can't remove user with specified id " + sid + ". User not found.");
+                        }
                     }
                 }
                 return context.Response.WriteAsync("user removed successfuly");
             }
             public System.Threading.Tasks.Task GetUser(HttpContext context) {
-                List<User> users = new List<User>();
-                using (MedialynxDbContext db = new MedialynxDbContext())
+                try
                 {
-                    Guid id = ToGuid(this.GetValue(context, "Id"), false);
-                    if (id != Guid.Empty)
+                    List<User> users = new List<User>();
+                    using (MedialynxDbContext db = new MedialynxDbContext())
                     {
-                        string sid = id.ToString("B");
-                        var user = db.Users.FirstOrDefault(user => user != null && user.Id == sid);
-                        // Validate instance is not null
-                        if (user != null)
+                        Guid id = ToGuid(this.GetValue(context, "Id"), false);
+                        if (id != Guid.Empty)
                         {
-                            users.Add(user);
+                            string sid = id.ToString("B");
+                            var user = db.Users.FirstOrDefault(user => user != null && user.Id == sid);
+                            // Validate instance is not null
+                            if (user != null)
+                            {
+                                users.Add(user);
+                            }
+                        }
+                        else 
+                        { // Add all users
+                            users.AddRange(db.Users);
                         }
                     }
-                    else 
-                    { // Add all users
-                        users.AddRange(db.Users);
-                    }
+                    var json = JsonSerializer.Serialize(users);
+                    return context.Response.WriteAsync(json);
                 }
-                var json = JsonSerializer.Serialize(users);
-                return context.Response.WriteAsync(json);
+                catch (Exception e)
+                {
+                    return context.Response.WriteAsync("can't recive user(s). Exception occured. " + e);
+                }
             }
         }
     }
